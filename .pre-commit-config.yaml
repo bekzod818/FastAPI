@@ -1,0 +1,50 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: black
+        language: system
+        types: [ python ]
+        args: [ --target-version=py310, --target-version=py311 ]
+
+      - id: autoflake
+        name: autoflake
+        entry: autoflake
+        language: system
+        types: [ python ]
+        args: [ --in-place, --remove-duplicate-keys, --remove-all-unused-imports ]
+
+      - id: pyupgrade
+        name: pyupgrade
+        entry: pyupgrade
+        language: system
+        types: [ python ]
+        args: [ --py37-plus ]
+
+      - id: isort
+        name: isort
+        entry: isort
+        require_serial: true
+        language: python
+        types_or: [ cython, pyi, python ]
+        args: [ '--profile', 'black', '--filter-files' ]
+        minimum_pre_commit_version: '2.9.2'
+
+      - id: yesqa
+        name: yesqa
+        entry: yesqa
+        language: system
+        types: [ python ]
