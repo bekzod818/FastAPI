@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
 from . import models, schemas
@@ -8,6 +8,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+
 # Dependency
 def get_db():
     db = SessionLocal()
@@ -15,9 +16,9 @@ def get_db():
         yield db
     finally:
         db.close()
-    
 
-@app.post('/users/', response_model=schemas.User)
+
+@app.post("/users", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = models.User(**user.dict())
     db.add(db_user)
@@ -26,7 +27,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 
-@app.get('/users/{user_id}', response_model=schemas.User)
+@app.get("/users/{user_id}", response_model=schemas.User)
 def get_user(user_id: int, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
@@ -34,7 +35,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     return db_user
 
 
-@app.put('/users/{user_id}', response_model=schemas.User)
+@app.put("/users/{user_id}", response_model=schemas.User)
 def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
@@ -47,12 +48,12 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(ge
     return db_user
 
 
-@app.delete('/users/{user_id}', status_code=204)
+@app.delete("/users/{user_id}", status_code=204)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     db.delete(db_user)
     db.commit()
     return None
