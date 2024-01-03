@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+portfolio/access_log
+portfolio/error_log
+
 # C extensions
 *.so
 
