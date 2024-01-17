@@ -46,6 +46,7 @@ async def post_root(request: Request):
     response = await request.form()
     name = response.get("name")
     email = response.get("email")
-    message = f"Received Request\n\nName: {name}\nEmail: {email}"
-    await send_message(message=message)
+    if name and email:
+        message = f"Received Request\n\nName: {name}\nEmail: {email}"
+        await send_message(message=message)
     return templates.TemplateResponse("index.html", {"request": request})
