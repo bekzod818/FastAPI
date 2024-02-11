@@ -24,4 +24,7 @@ Open your browser to [http://localhost:8000](http://localhost:8000)
 
 TUTORIAL ARTICLE: [Read More](https://testdriven.io/blog/fastapi-and-celery/)
 
-ANOTHER ARTICLE: [Click here](https://testdriven.io/courses/fastapi-celery/docker/)
+ANOTHER ARTICLES:
+1. [Dockerizing Celery and FastAPI
+](https://testdriven.io/courses/fastapi-celery/docker/)
+2. [Empowering Applications with Asynchronous Magic: The Celery, FastAPI, Docker, and Flower](https://medium.com/@youssefchamrah/empowering-applications-with-asynchronous-magic-the-celery-fastapi-docker-and-flower-ac119efc2e04)
