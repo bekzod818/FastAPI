@@ -21,3 +21,5 @@ $ docker-compose exec web python -m pytest
 ```
 
 Open your browser to [http://localhost:8000](http://localhost:8000)
+
+TUTORIAL ARTICLE: [Read More](https://testdriven.io/blog/fastapi-and-celery/)
