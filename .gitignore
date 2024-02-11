@@ -7,6 +7,10 @@ __pycache__/
 portfolio/access_log
 portfolio/error_log
 
+*.pyc
+__pycache
+.DS_Store
+
 # C extensions
 *.so
 
