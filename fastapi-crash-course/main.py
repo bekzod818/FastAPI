@@ -4,7 +4,7 @@ from typing import Annotated
 import uvicorn
 from database import create_tables, drop_tables
 from fastapi import Depends, FastAPI
-from pydantic import BaseModel
+from schemas import STask, STaskAdd
 
 
 @asynccontextmanager
@@ -19,15 +19,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 tasks = []
-
-
-class STaskAdd(BaseModel):
-    name: str
-    description: str | None = None
-
-
-class STask(STaskAdd):
-    id: int
 
 
 @app.get("/")
