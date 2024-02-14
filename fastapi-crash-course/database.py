@@ -23,6 +23,6 @@ async def create_tables():
         await connection.run_sync(Model.metadata.create_all)
 
 
-async def drop_tables():
+async def delete_tables():
     async with engine.begin() as connection:
         await connection.run_sync(Model.metadata.drop_all)

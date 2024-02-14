@@ -1,15 +1,14 @@
 from contextlib import asynccontextmanager
-from typing import Annotated
 
 import uvicorn
-from database import create_tables, drop_tables
-from fastapi import Depends, FastAPI
-from schemas import STask, STaskAdd
+from database import create_tables, delete_tables
+from fastapi import FastAPI
+from router import router as tasks_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await drop_tables()
+    await delete_tables()
     print("Baza tozalandi")
     await create_tables()
     print("Bazada jadvallar yangidan yaratildi")
@@ -18,20 +17,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-tasks = []
-
-
-@app.get("/")
-async def get_data():
-    task = STask(name="Learn FastAPI")
-    return {"data": task}
-
-
-@app.post("/tasks")
-async def create_task(task: Annotated[STaskAdd, Depends()]):
-    tasks.append(task)
-    return {"ok": True}
-
+app.include_router(tasks_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
