@@ -1,19 +1,19 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from database import create_tables, delete_tables
+from database import create_tables
 from fastapi import FastAPI
 from router import router as tasks_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await delete_tables()
-    print("Baza tozalandi")
+    # await delete_tables()
+    # print("Deleted tables from database ...")
     await create_tables()
-    print("Bazada jadvallar yangidan yaratildi")
+    print("Connected to database ...")
     yield
-    print("O'chirildi")
+    print("Closed ...")
 
 
 app = FastAPI(lifespan=lifespan)

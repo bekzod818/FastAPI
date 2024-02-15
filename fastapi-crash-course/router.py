@@ -2,15 +2,15 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from repository import TaskRepository
-from schemas import STaskAdd
+from schemas import STask, STaskAdd
 
-router = APIRouter(prefix="/tasks")
+router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
 @router.get("/")
-async def get_tasks():
+async def get_tasks() -> list[STask]:
     tasks = await TaskRepository.find_all()
-    return {"tasks": tasks}
+    return tasks
 
 
 @router.post("/")
