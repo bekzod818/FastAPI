@@ -1,5 +1,6 @@
-from fastapi import Body, FastAPI
+from fastapi import Body, Depends, FastAPI
 
+from .auth.auth_bearer import JWTBearer
 from .auth.auth_handler import signJWT
 from .model import PostSchema, UserLoginSchema, UserSchema
 
@@ -30,7 +31,7 @@ async def get_single_post(id: int) -> dict:
             return {"data": post}
 
 
-@app.post("/posts", tags=["posts"])
+@app.post("/posts", dependencies=[Depends(JWTBearer())], tags=["posts"])
 async def add_post(post: PostSchema) -> dict:
     post.id = len(posts) + 1
     posts.append(post.dict())
