@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import Body, FastAPI
 
-from .model import PostSchema
+from .auth.auth_handler import signJWT
+from .model import PostSchema, UserLoginSchema, UserSchema
 
 app = FastAPI()
 
@@ -34,3 +35,26 @@ async def add_post(post: PostSchema) -> dict:
     post.id = len(posts) + 1
     posts.append(post.dict())
     return {"data": "post added."}
+
+
+@app.post("/user/signup", tags=["user"])
+async def create_user(user: UserSchema = Body(...)):
+    """
+    In a production environment, make sure to hash your password using bcrypt or passlib before saving the user to the database.
+    """
+    users.append(user)  # replace with db call, making sure to hash the password first
+    return signJWT(user.email)
+
+
+def check_user(data: UserLoginSchema):
+    for user in users:
+        if user.email == data.email and user.password == data.password:
+            return True
+    return False
+
+
+@app.post("/user/login", tags=["user"])
+async def user_login(user: UserLoginSchema = Body(...)):
+    if check_user(user):
+        return signJWT(user.email)
+    return {"error": "Wrong login details!"}
