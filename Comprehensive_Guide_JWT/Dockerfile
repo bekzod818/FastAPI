@@ -1,18 +1,18 @@
-FROM        python:3.11.5-alpine
+FROM python:3.11.5-alpine
 
-ENV         PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1
 
-WORKDIR     /home
+WORKDIR /home
 
-COPY        ./requirements.txt .
+COPY ./requirements.txt .
 
-COPY        * .
+COPY * .
 
-RUN         pip install -r requirements.txt \
-            && adduser --disabled-password --no-create-home doe
+RUN pip install -r requirements.txt \
+    && adduser --disabled-password --no-create-home doe
 
-USER        doe
+USER doe
 
-EXPOSE      8000
+EXPOSE 8000
 
-CMD         ["uvicorn", "main:app", "--port", "8000", "--host", "0.0.0.0"]
+CMD ["uvicorn", "main:app", "--port", "8000", "--host", "0.0.0.0"]
