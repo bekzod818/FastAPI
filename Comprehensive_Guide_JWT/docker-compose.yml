@@ -17,6 +17,8 @@ services:
     container_name: fastapiapp_demoapp
     ports:
       - 8000:8000
+    env_file:
+      - .env
     volumes:
       - .:/home
     depends_on:
