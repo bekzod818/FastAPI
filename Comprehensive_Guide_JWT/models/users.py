@@ -40,7 +40,7 @@ class User(Base):
         """Confirms password validity"""
         return bcrypt.checkpw(password.encode(), self.hashed_password)
 
-    def generate_password(self) -> dict:
+    def generate_token(self) -> dict:
         """Generate access token for user"""
         return {
             "access_token": jwt.encode(
