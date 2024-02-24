@@ -9,3 +9,5 @@ DATABASE_URL = (
         password=os.getenv("POSTGRES_PASSWORD"),
     )
 )
+
+SECRET_KEY = ""
