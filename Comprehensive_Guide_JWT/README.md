@@ -33,3 +33,9 @@ Docker-compose build
 ```
 docker-compose up --build -d --no-deps
 ```
+
+
+## Implementing Authorization in FastAPI: A Step-by-Step Guide to Securing Your Web Applications
+#api #security #tutorial
+
+[Read More](https://dev.to/spaceofmiah/implementing-authorization-in-fastapi-a-step-by-step-guide-for-securing-your-web-applications-3b1l)
