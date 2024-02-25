@@ -58,7 +58,7 @@ def get_profile(
     id: int, token: str = Depends(oauth2_scheme), session: Session = Depends(get_db)
 ):
     """Processes request to retrieve user profile by id"""
-    print(token)
+    print("Bearer token:", token)
     return user_db_services.get_user_by_id(session=session, id=id)
 
 
