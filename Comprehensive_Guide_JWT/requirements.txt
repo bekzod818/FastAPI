@@ -6,3 +6,4 @@ SQLAlchemy==2.0.27
 uvicorn==0.27.1
 fastapi==0.109.2
 pyjwt==2.8.0
+python-multipart
