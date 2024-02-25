@@ -31,5 +31,5 @@ by fastapi.
 Docker-compose build
 
 ```
-docker-compose up -d --build
+docker-compose up --build -d --no-deps
 ```

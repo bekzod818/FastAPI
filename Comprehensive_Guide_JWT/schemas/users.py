@@ -15,7 +15,7 @@ class UserSchema(UserBaseSchema):
     is_active: bool = Field(default=False)
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserLoginSchema(BaseModel):
