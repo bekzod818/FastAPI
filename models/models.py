@@ -1,5 +1,14 @@
 from datetime import datetime
-from sqlalchemy import MetaData, Table, Column, Integer, String, TIMESTAMP, ForeignKey, JSON
+from sqlalchemy import (
+    MetaData,
+    Table,
+    Column,
+    Integer,
+    String,
+    TIMESTAMP,
+    ForeignKey,
+    JSON,
+)
 
 
 metadata = MetaData()
@@ -22,5 +31,5 @@ users = Table(
     Column("username", String, nullable=False),
     Column("password", String, nullable=False),
     Column("registered_at", TIMESTAMP, default=datetime.utcnow),
-    Column("role_id", Integer, ForeignKey("roles.id"))
+    Column("role_id", Integer, ForeignKey("roles.id")),
 )

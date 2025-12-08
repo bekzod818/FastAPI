@@ -6,8 +6,7 @@ app = FastAPI()
 
 @app.get("/items/")
 async def read_items(
-    q: str
-    | None = Query(
+    q: str | None = Query(
         default=None,
         min_length=3,
         max_length=50,
@@ -15,7 +14,7 @@ async def read_items(
         description="Query string for the items to search in the database that have a good match",
         alias="item-query",
         deprecated=True,
-    )  # regex="^fixedquery$"
+    ),  # regex="^fixedquery$"
 ):
     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
     if q:
@@ -41,7 +40,7 @@ async def get_items_list(items: list[str] | None = Query(default=["foo", "bar"])
 
 @app.get("/hidden/item/")
 async def get_hidden_item(
-    hidden_query: str | None = Query(default=None, include_in_schema=False)
+    hidden_query: str | None = Query(default=None, include_in_schema=False),
 ):
     if hidden_query:
         return {"hidden_query": hidden_query}
