@@ -1,0 +1,216 @@
+services:
+  # ===== DATABASES =====
+  user-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    networks:
+      - shopmicro-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  order-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: orderdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    networks:
+      - shopmicro-network
+
+  payment-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: paymentdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - payment-db-data:/var/lib/postgresql/data
+    networks:
+      - shopmicro-network
+
+  product-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: productdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - product-db-data:/var/lib/postgresql/data
+    networks:
+      - shopmicro-network
+
+  notification-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: notificationdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    networks:
+      - shopmicro-network
+
+  inventory-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - inventory-db-data:/var/lib/postgresql/data
+    networks:
+      - shopmicro-network
+
+  # ===== MESSAGE BROKER =====
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - shopmicro-network
+
+  # ===== REDIS FOR CACHING =====
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - shopmicro-network
+
+  # ===== API GATEWAY =====
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=your-secret-key-change-in-production
+    depends_on:
+      - user-service
+      - order-service
+      - payment-service
+      - product-service
+      - notification-service
+      - inventory-service
+    networks:
+      - shopmicro-network
+
+  # ===== USER SERVICE =====
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://user:password@user-db:5432/userdb
+      - SECRET_KEY=your-secret-key-change-in-production
+    depends_on:
+      user-db:
+        condition: service_healthy
+    networks:
+      - shopmicro-network
+
+  # ===== PRODUCT SERVICE =====
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://user:password@product-db:5432/productdb
+    depends_on:
+      - product-db
+    networks:
+      - shopmicro-network
+
+  # ===== ORDER SERVICE =====
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://user:password@order-db:5432/orderdb
+      - PRODUCT_SERVICE_URL=http://product-service:8002
+      - PAYMENT_SERVICE_URL=http://payment-service:8004
+      - INVENTORY_SERVICE_URL=http://inventory-service:8006
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8005
+    depends_on:
+      - order-db
+      - product-service
+    networks:
+      - shopmicro-network
+
+  # ===== PAYMENT SERVICE =====
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://user:password@payment-db:5432/paymentdb
+      - ORDER_SERVICE_URL=http://order-service:8003
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8005
+    depends_on:
+      - payment-db
+    networks:
+      - shopmicro-network
+
+  # ===== NOTIFICATION SERVICE =====
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://user:password@notification-db:5432/notificationdb
+      - USER_SERVICE_URL=http://user-service:8001
+      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    depends_on:
+      - notification-db
+    networks:
+      - shopmicro-network
+
+  # ===== INVENTORY SERVICE =====
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://user:password@inventory-db:5432/inventorydb
+    depends_on:
+      - inventory-db
+    networks:
+      - shopmicro-network
+
+networks:
+  shopmicro-network:
+    driver: bridge
+
+volumes:
+  user-db-data:
+  order-db-data:
+  payment-db-data:
+  product-db-data:
+  notification-db-data:
+  inventory-db-data:
+  rabbitmq-data:
+  redis-data:
+  
