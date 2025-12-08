@@ -5,6 +5,7 @@ Revises:
 Create Date: 2024-02-13 03:31:20.333848
 
 """
+
 from typing import Sequence, Union
 
 import sqlmodel
