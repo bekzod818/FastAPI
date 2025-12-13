@@ -10,7 +10,19 @@ from typing import Optional
 from fastapi import FastAPI, Request, Response, Query
 from fastapi.responses import JSONResponse
 
+from sqlalchemy.orm import Session
+from fastapi import Depends
+
 from config import settings
+from database import get_db, init_db
+from models import Category, Article
+from schemas import (
+    CategoryResponse,
+    CategoryListResponse,
+    CategoryWithArticlesResponse,
+    ArticleResponse,
+    ArticleListResponse,
+)
 from i18n.utils import (
     get_translator,
     get_locale_from_accept_language,
@@ -21,6 +33,12 @@ from i18n.utils import (
 )
 
 app = FastAPI(title=settings.app_name, version="1.0.0")
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup."""
+    init_db()
 
 
 def get_locale(request: Request) -> str:
@@ -228,8 +246,195 @@ async def info():
             "Automatic locale detection",
             "Locale persistence via cookies",
             "RTL language support (Hebrew)",
+            "Database models with translatable fields",
         ],
     }
+
+
+# ============================================================================
+# Category API Endpoints
+# ============================================================================
+
+@app.get("/categories", response_model=list[CategoryListResponse])
+async def get_categories(
+    request: Request,
+    locale: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of all categories with translated fields.
+    
+    Example: /categories?locale=ru
+    """
+    user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
+    
+    # Get all categories from database
+    categories = db.query(Category).all()
+    
+    # Build response with translated fields
+    result = []
+    for category in categories:
+        result.append(CategoryListResponse(
+            id=category.id,
+            title=category.get_title(user_locale),
+            description=category.get_description(user_locale),
+            locale=user_locale
+        ))
+    
+    return result
+
+
+@app.get("/categories/{category_id}", response_model=CategoryResponse)
+async def get_category(
+    category_id: int,
+    request: Request,
+    locale: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a single category by ID with translated fields.
+    
+    Example: /categories/1?locale=uz
+    """
+    user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
+    
+    # Get category from database
+    category = db.query(Category).filter(Category.id == category_id).first()
+    
+    if not category:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"Category with id {category_id} not found"}
+        )
+    
+    return CategoryResponse(
+        id=category.id,
+        title=category.get_title(user_locale),
+        description=category.get_description(user_locale),
+        locale=user_locale,
+        created_at=category.created_at,
+        updated_at=category.updated_at
+    )
+
+
+@app.get("/categories/{category_id}/detail", response_model=CategoryWithArticlesResponse)
+async def get_category_with_articles(
+    category_id: int,
+    request: Request,
+    locale: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a category with all its articles, with translated fields.
+    
+    Example: /categories/1/detail?locale=ru
+    """
+    user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
+    
+    # Get category with articles from database
+    category = db.query(Category).filter(Category.id == category_id).first()
+    
+    if not category:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"Category with id {category_id} not found"}
+        )
+    
+    # Build articles list with translated fields
+    articles = []
+    for article in category.articles:
+        articles.append(ArticleListResponse(
+            id=article.id,
+            category_id=article.category_id,
+            title=article.get_title(user_locale),
+            description=article.get_description(user_locale),
+            locale=user_locale
+        ))
+    
+    return CategoryWithArticlesResponse(
+        id=category.id,
+        title=category.get_title(user_locale),
+        description=category.get_description(user_locale),
+        locale=user_locale,
+        articles=articles,
+        created_at=category.created_at,
+        updated_at=category.updated_at
+    )
+
+
+# ============================================================================
+# Article API Endpoints
+# ============================================================================
+
+@app.get("/articles", response_model=list[ArticleListResponse])
+async def get_articles(
+    request: Request,
+    locale: Optional[str] = Query(None),
+    category_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of all articles with translated fields.
+    Optionally filter by category_id.
+    
+    Example: /articles?locale=uz&category_id=1
+    """
+    user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
+    
+    # Build query
+    query = db.query(Article)
+    if category_id is not None:
+        query = query.filter(Article.category_id == category_id)
+    
+    # Get articles from database
+    articles = query.all()
+    
+    # Build response with translated fields
+    result = []
+    for article in articles:
+        result.append(ArticleListResponse(
+            id=article.id,
+            category_id=article.category_id,
+            title=article.get_title(user_locale),
+            description=article.get_description(user_locale),
+            locale=user_locale
+        ))
+    
+    return result
+
+
+@app.get("/articles/{article_id}", response_model=ArticleResponse)
+async def get_article(
+    article_id: int,
+    request: Request,
+    locale: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a single article by ID with translated fields.
+    
+    Example: /articles/1?locale=ru
+    """
+    user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
+    
+    # Get article from database
+    article = db.query(Article).filter(Article.id == article_id).first()
+    
+    if not article:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"Article with id {article_id} not found"}
+        )
+    
+    return ArticleResponse(
+        id=article.id,
+        category_id=article.category_id,
+        title=article.get_title(user_locale),
+        description=article.get_description(user_locale),
+        locale=user_locale,
+        created_at=article.created_at,
+        updated_at=article.updated_at
+    )
 
 
 if __name__ == "__main__":

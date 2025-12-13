@@ -4,7 +4,7 @@ A comprehensive FastAPI application demonstrating internationalization (i18n) su
 
 ## Features
 
-- ✅ **Basic Translations** - Support for multiple languages (English, Spanish, Hebrew)
+- ✅ **Basic Translations** - Support for multiple languages (English, Spanish, Hebrew, Uzbek, Russian)
 - ✅ **Pluralization** - Proper handling of singular/plural forms
 - ✅ **Datetime Localization** - Locale-aware date and time formatting
 - ✅ **Currency Formatting** - Localized currency display
@@ -14,6 +14,8 @@ A comprehensive FastAPI application demonstrating internationalization (i18n) su
   - Accept-Language header
 - ✅ **Locale Persistence** - Stores user preferences in cookies
 - ✅ **RTL Language Support** - Full support for right-to-left languages (Hebrew)
+- ✅ **Database Models with Translatable Fields** - Category and Article models with multi-language support
+- ✅ **RESTful API** - Complete CRUD endpoints for categories and articles with automatic translation
 
 ## Prerequisites
 
@@ -35,6 +37,11 @@ A comprehensive FastAPI application demonstrating internationalization (i18n) su
 3. **Compile translation files:**
    ```bash
    uv run python compile_translations.py
+   ```
+
+4. **Initialize database with sample data:**
+   ```bash
+   uv run python init_db.py
    ```
 
 ## Running the Application
@@ -212,7 +219,7 @@ curl http://localhost:8000/info
 **Response:**
 ```json
 {
-  "supported_locales": ["en", "es", "he"],
+  "supported_locales": ["en", "es", "he", "uz", "ru"],
   "default_locale": "en",
   "features": [
     "Basic translations",
@@ -221,8 +228,207 @@ curl http://localhost:8000/info
     "Currency formatting",
     "Automatic locale detection",
     "Locale persistence via cookies",
-    "RTL language support (Hebrew)"
+    "RTL language support (Hebrew)",
+    "Database models with translatable fields"
   ]
+}
+```
+
+### 8. Get Categories List
+
+**GET** `/categories`
+
+Returns a list of all categories with translated fields based on the user's locale.
+
+**Examples:**
+```bash
+# Get categories in English (default)
+curl http://localhost:8000/categories
+
+# Get categories in Russian
+curl http://localhost:8000/categories?locale=ru
+
+# Get categories in Uzbek
+curl http://localhost:8000/categories?locale=uz
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "title": "Technology",
+    "description": "Articles about technology and innovation",
+    "locale": "en"
+  },
+  {
+    "id": 2,
+    "title": "Science",
+    "description": "Scientific articles and research",
+    "locale": "en"
+  }
+]
+```
+
+**Response (Russian):**
+```json
+[
+  {
+    "id": 1,
+    "title": "Технологии",
+    "description": "Статьи о технологиях и инновациях",
+    "locale": "ru"
+  },
+  {
+    "id": 2,
+    "title": "Наука",
+    "description": "Научные статьи и исследования",
+    "locale": "ru"
+  }
+]
+```
+
+### 9. Get Category Detail
+
+**GET** `/categories/{category_id}`
+
+Returns a single category with translated fields.
+
+**Examples:**
+```bash
+curl http://localhost:8000/categories/1?locale=uz
+curl http://localhost:8000/categories/1?locale=ru
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "title": "Technology",
+  "description": "Articles about technology and innovation",
+  "locale": "en",
+  "created_at": "2024-01-15T10:00:00",
+  "updated_at": "2024-01-15T10:00:00"
+}
+```
+
+### 10. Get Category with Articles
+
+**GET** `/categories/{category_id}/detail`
+
+Returns a category with all its articles, all with translated fields.
+
+**Examples:**
+```bash
+curl http://localhost:8000/categories/1/detail?locale=ru
+curl http://localhost:8000/categories/1/detail?locale=uz
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "title": "Technology",
+  "description": "Articles about technology and innovation",
+  "locale": "en",
+  "articles": [
+    {
+      "id": 1,
+      "category_id": 1,
+      "title": "Introduction to Python",
+      "description": "Learn the basics of Python programming language",
+      "locale": "en"
+    },
+    {
+      "id": 2,
+      "category_id": 1,
+      "title": "FastAPI Best Practices",
+      "description": "Best practices for building APIs with FastAPI",
+      "locale": "en"
+    }
+  ],
+  "created_at": "2024-01-15T10:00:00",
+  "updated_at": "2024-01-15T10:00:00"
+}
+```
+
+### 11. Get Articles List
+
+**GET** `/articles`
+
+Returns a list of all articles with translated fields. Optionally filter by category.
+
+**Examples:**
+```bash
+# Get all articles
+curl http://localhost:8000/articles?locale=ru
+
+# Get articles for a specific category
+curl http://localhost:8000/articles?locale=uz&category_id=1
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "category_id": 1,
+    "title": "Introduction to Python",
+    "description": "Learn the basics of Python programming language",
+    "locale": "en"
+  },
+  {
+    "id": 2,
+    "category_id": 1,
+    "title": "FastAPI Best Practices",
+    "description": "Best practices for building APIs with FastAPI",
+    "locale": "en"
+  }
+]
+```
+
+**Response (Russian):**
+```json
+[
+  {
+    "id": 1,
+    "category_id": 1,
+    "title": "Введение в Python",
+    "description": "Изучите основы языка программирования Python",
+    "locale": "ru"
+  },
+  {
+    "id": 2,
+    "category_id": 1,
+    "title": "Лучшие практики FastAPI",
+    "description": "Лучшие практики создания API с FastAPI",
+    "locale": "ru"
+  }
+]
+```
+
+### 12. Get Article Detail
+
+**GET** `/articles/{article_id}`
+
+Returns a single article with translated fields.
+
+**Examples:**
+```bash
+curl http://localhost:8000/articles/1?locale=uz
+curl http://localhost:8000/articles/1?locale=ru
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "category_id": 1,
+  "title": "Introduction to Python",
+  "description": "Learn the basics of Python programming language",
+  "locale": "en",
+  "created_at": "2024-01-15T10:00:00",
+  "updated_at": "2024-01-15T10:00:00"
 }
 ```
 
@@ -241,7 +447,11 @@ The application detects the user's preferred locale in the following order:
 fastapi-i18n-demo/
 ├── main.py                 # FastAPI application with all endpoints
 ├── config.py               # Pydantic settings configuration
+├── database.py             # Database connection and session management
+├── models.py               # SQLAlchemy models (Category, Article)
+├── schemas.py              # Pydantic schemas for API requests/responses
 ├── compile_translations.py # Script to compile .po to .mo files
+├── init_db.py              # Database initialization script
 ├── i18n/
 │   ├── __init__.py         # Module exports
 │   └── utils.py            # i18n utility functions
@@ -254,10 +464,13 @@ fastapi-i18n-demo/
 │   │   └── LC_MESSAGES/
 │   │       ├── messages.po # Spanish translations (source)
 │   │       └── messages.mo # Spanish translations (compiled)
-│   └── he/
-│       └── LC_MESSAGES/
-│           ├── messages.po # Hebrew translations (source)
-│           └── messages.mo # Hebrew translations (compiled)
+│   ├── he/
+│   │   └── LC_MESSAGES/
+│   │       ├── messages.po # Hebrew translations (source)
+│   │       └── messages.mo # Hebrew translations (compiled)
+│   ├── uz/                 # Uzbek (database translations only)
+│   └── ru/                 # Russian (database translations only)
+├── app.db                   # SQLite database (created on first run)
 ├── pyproject.toml          # Project dependencies
 └── README.md               # This file
 ```
@@ -348,13 +561,51 @@ print(response.json())
 headers = {"Accept-Language": "es,en;q=0.9"}
 response = requests.get("http://localhost:8000/", headers=headers)
 print(response.json())
+
+# Test database endpoints
+# Get categories in Russian
+response = requests.get("http://localhost:8000/categories?locale=ru")
+print(response.json())
+
+# Get articles in Uzbek
+response = requests.get("http://localhost:8000/articles?locale=uz")
+print(response.json())
+
+# Get category with articles in Russian
+response = requests.get("http://localhost:8000/categories/1/detail?locale=ru")
+print(response.json())
 ```
+
+## Database Models
+
+The application includes two main models with translatable fields:
+
+### Category Model
+- `id` - Primary key
+- `title_en`, `title_ru`, `title_uz`, `title_es`, `title_he` - Translatable title fields
+- `description_en`, `description_ru`, `description_uz`, `description_es`, `description_he` - Translatable description fields
+- `created_at`, `updated_at` - Timestamps
+- `articles` - Relationship to Article model
+
+### Article Model
+- `id` - Primary key
+- `category_id` - Foreign key to Category
+- `title_en`, `title_ru`, `title_uz`, `title_es`, `title_he` - Translatable title fields
+- `description_en`, `description_ru`, `description_uz`, `description_es`, `description_he` - Translatable description fields
+- `created_at`, `updated_at` - Timestamps
+- `category` - Relationship to Category model
+
+Both models include helper methods:
+- `get_title(locale)` - Returns title in specified locale, falls back to English
+- `get_description(locale)` - Returns description in specified locale, falls back to English
 
 ## Dependencies
 
 - **FastAPI** - Modern web framework
 - **Uvicorn** - ASGI server
 - **Pydantic** - Data validation and settings
+- **SQLAlchemy** - SQL toolkit and ORM
+- **Alembic** - Database migration tool
 - **Babel** - Internationalization library
   - Translation support (gettext)
   - Datetime formatting
@@ -363,15 +614,19 @@ print(response.json())
 
 ## How It Works
 
-1. **Translation System**: Uses Python's `gettext` module with Babel for managing translation files (`.po` and `.mo`)
+1. **Translation System**: 
+   - Uses Python's `gettext` module with Babel for managing translation files (`.po` and `.mo`)
+   - Database models store translations in separate columns (e.g., `title_en`, `title_ru`, `title_uz`)
 
 2. **Locale Detection**: The `get_locale()` function checks multiple sources to determine the user's preferred language
 
-3. **Pluralization**: Uses `ngettext()` to handle singular/plural forms based on locale-specific rules
+3. **Database Translations**: Models include `get_title()` and `get_description()` methods that automatically return the appropriate translation based on the user's locale, with fallback to English
 
-4. **Formatting**: Babel's `dates` and `numbers` modules provide locale-aware formatting for datetimes and currencies
+4. **Pluralization**: Uses `ngettext()` to handle singular/plural forms based on locale-specific rules
 
-5. **Persistence**: Cookies store the user's language preference for future visits
+5. **Formatting**: Babel's `dates` and `numbers` modules provide locale-aware formatting for datetimes and currencies
+
+6. **Persistence**: Cookies store the user's language preference for future visits
 
 ## Further Reading
 

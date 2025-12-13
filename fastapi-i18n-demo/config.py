@@ -11,13 +11,16 @@ class Settings(BaseSettings):
     default_locale: str = "en"
     
     # Supported locales
-    supported_locales: list[str] = ["en", "es", "he"]
+    supported_locales: list[str] = ["en", "es", "he", "uz", "ru"]
     
     # Locale directory path
     locale_dir: str = "locale"
     
     # Application name
     app_name: str = "FastAPI i18n Demo"
+    
+    # Database
+    database_url: str = "sqlite:///./app.db"
     
     model_config = SettingsConfigDict(
         env_file=".env",
