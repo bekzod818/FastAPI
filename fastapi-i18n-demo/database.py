@@ -1,39 +1,44 @@
 """
-Database connection and session management.
+Database connection and session management with async support.
 """
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
 
 from config import settings
 
-# Create database engine
-engine = create_engine(
+# Create async database engine
+engine = create_async_engine(
     settings.database_url,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.database_url else {},
-    echo=False  # Set to True for SQL query logging
+    echo=False,  # Set to True for SQL query logging
+    future=True
 )
 
-# Create session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Create async session factory
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
 
 # Base class for models
 Base = declarative_base()
 
 
-def get_db():
+async def get_db() -> AsyncSession:
     """
-    Dependency function to get database session.
+    Dependency function to get async database session.
     Use this in FastAPI route dependencies.
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
-def init_db():
+async def init_db():
     """Initialize database by creating all tables."""
-    Base.metadata.create_all(bind=engine)
-
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

@@ -5,16 +5,18 @@ This application demonstrates internationalization (i18n) support in FastAPI,
 including translations, pluralization, datetime localization, currency formatting,
 and automatic locale detection.
 """
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
-from fastapi import FastAPI, Request, Response, Query
+from fastapi import FastAPI, Request, Response, Query, Depends
 from fastapi.responses import JSONResponse
 
-from sqlalchemy.orm import Session
-from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from config import settings
-from database import get_db, init_db
+from database import get_db, init_db, engine
 from models import Category, Article
 from schemas import (
     CategoryResponse,
@@ -32,13 +34,22 @@ from i18n.utils import (
     get_stored_locale,
 )
 
-app = FastAPI(title=settings.app_name, version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup and shutdown events."""
+    # Startup
+    await init_db()
+    yield
+    # Shutdown
+    await engine.dispose()
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database on startup."""
-    init_db()
+app = FastAPI(
+    title=settings.app_name,
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 
 def get_locale(request: Request) -> str:
@@ -259,7 +270,7 @@ async def info():
 async def get_categories(
     request: Request,
     locale: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get list of all categories with translated fields.
@@ -269,19 +280,20 @@ async def get_categories(
     user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
     
     # Get all categories from database
-    categories = db.query(Category).all()
+    result = await db.execute(select(Category))
+    categories = result.scalars().all()
     
     # Build response with translated fields
-    result = []
+    response_list = []
     for category in categories:
-        result.append(CategoryListResponse(
+        response_list.append(CategoryListResponse(
             id=category.id,
             title=category.get_title(user_locale),
             description=category.get_description(user_locale),
             locale=user_locale
         ))
     
-    return result
+    return response_list
 
 
 @app.get("/categories/{category_id}", response_model=CategoryResponse)
@@ -289,7 +301,7 @@ async def get_category(
     category_id: int,
     request: Request,
     locale: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get a single category by ID with translated fields.
@@ -299,7 +311,8 @@ async def get_category(
     user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
     
     # Get category from database
-    category = db.query(Category).filter(Category.id == category_id).first()
+    result = await db.execute(select(Category).where(Category.id == category_id))
+    category = result.scalar_one_or_none()
     
     if not category:
         return JSONResponse(
@@ -322,7 +335,7 @@ async def get_category_with_articles(
     category_id: int,
     request: Request,
     locale: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get a category with all its articles, with translated fields.
@@ -332,7 +345,12 @@ async def get_category_with_articles(
     user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
     
     # Get category with articles from database
-    category = db.query(Category).filter(Category.id == category_id).first()
+    result = await db.execute(
+        select(Category)
+        .where(Category.id == category_id)
+        .options(joinedload(Category.articles))
+    )
+    category = result.unique().scalar_one_or_none()
     
     if not category:
         return JSONResponse(
@@ -371,7 +389,7 @@ async def get_articles(
     request: Request,
     locale: Optional[str] = Query(None),
     category_id: Optional[int] = Query(None),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get list of all articles with translated fields.
@@ -382,17 +400,18 @@ async def get_articles(
     user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
     
     # Build query
-    query = db.query(Article)
+    query = select(Article)
     if category_id is not None:
-        query = query.filter(Article.category_id == category_id)
+        query = query.where(Article.category_id == category_id)
     
     # Get articles from database
-    articles = query.all()
+    result = await db.execute(query)
+    articles = result.scalars().all()
     
     # Build response with translated fields
-    result = []
+    response_list = []
     for article in articles:
-        result.append(ArticleListResponse(
+        response_list.append(ArticleListResponse(
             id=article.id,
             category_id=article.category_id,
             title=article.get_title(user_locale),
@@ -400,7 +419,7 @@ async def get_articles(
             locale=user_locale
         ))
     
-    return result
+    return response_list
 
 
 @app.get("/articles/{article_id}", response_model=ArticleResponse)
@@ -408,7 +427,7 @@ async def get_article(
     article_id: int,
     request: Request,
     locale: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get a single article by ID with translated fields.
@@ -418,7 +437,8 @@ async def get_article(
     user_locale = locale if locale and locale in settings.supported_locales else get_locale(request)
     
     # Get article from database
-    article = db.query(Article).filter(Article.id == article_id).first()
+    result = await db.execute(select(Article).where(Article.id == article_id))
+    article = result.scalar_one_or_none()
     
     if not article:
         return JSONResponse(
