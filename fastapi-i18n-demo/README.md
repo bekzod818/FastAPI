@@ -21,6 +21,7 @@ A comprehensive FastAPI application demonstrating internationalization (i18n) su
 
 - Python 3.13+
 - [UV](https://github.com/astral-sh/uv) package manager
+- PostgreSQL 12+ (for database)
 
 ## Installation
 
@@ -29,17 +30,41 @@ A comprehensive FastAPI application demonstrating internationalization (i18n) su
    cd fastapi-i18n-demo
    ```
 
-2. **Install dependencies:**
+2. **Set up PostgreSQL database:**
+   ```bash
+   # Create database (using psql)
+   createdb fastapi_i18n
+   
+   # Or using SQL
+   psql -U postgres -c "CREATE DATABASE fastapi_i18n;"
+   ```
+
+3. **Configure database connection:**
+   ```bash
+   # Copy example environment file
+   cp .env.example .env
+   
+   # Edit .env file with your PostgreSQL credentials
+   # DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/fastapi_i18n
+   ```
+
+4. **Install dependencies:**
    ```bash
    uv sync
    ```
 
-3. **Compile translation files:**
+5. **Compile translation files:**
    ```bash
    uv run python compile_translations.py
    ```
 
-4. **Initialize database with sample data:**
+6. **Run database migrations:**
+   ```bash
+   # Apply migrations to create tables
+   uv run alembic upgrade head
+   ```
+
+7. **Initialize database with sample data:**
    ```bash
    uv run python init_db.py
    ```
@@ -604,7 +629,8 @@ Both models include helper methods:
 - **FastAPI** - Modern web framework
 - **Uvicorn** - ASGI server
 - **Pydantic** - Data validation and settings
-- **SQLAlchemy** - SQL toolkit and ORM
+- **SQLAlchemy** - SQL toolkit and ORM (async support)
+- **asyncpg** - Fast PostgreSQL async driver
 - **Alembic** - Database migration tool
 - **Babel** - Internationalization library
   - Translation support (gettext)
@@ -612,25 +638,119 @@ Both models include helper methods:
   - Currency formatting
   - Locale parsing
 
+## Database
+
+The application uses **PostgreSQL** with **asyncpg** for async database operations. All database operations are fully asynchronous for better performance.
+
+### Database Configuration
+
+The database connection is configured via the `DATABASE_URL` environment variable:
+
+```bash
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/fastapi_i18n
+```
+
+### Async Database Operations
+
+All database queries use SQLAlchemy's async API:
+- `AsyncSession` for database sessions
+- `select()` statements for queries
+- `await` for all database operations
+- Proper connection pooling with asyncpg
+
 ## How It Works
 
 1. **Translation System**: 
    - Uses Python's `gettext` module with Babel for managing translation files (`.po` and `.mo`)
    - Database models store translations in separate columns (e.g., `title_en`, `title_ru`, `title_uz`)
 
-2. **Locale Detection**: The `get_locale()` function checks multiple sources to determine the user's preferred language
+2. **Async Database**: 
+   - Uses PostgreSQL with asyncpg for high-performance async database operations
+   - All database queries are asynchronous using SQLAlchemy's async API
+   - Proper connection pooling and resource management
 
-3. **Database Translations**: Models include `get_title()` and `get_description()` methods that automatically return the appropriate translation based on the user's locale, with fallback to English
+3. **Lifespan Management**: 
+   - Uses FastAPI's modern `lifespan` context manager instead of deprecated `@app.on_event()`
+   - Handles database initialization on startup and cleanup on shutdown
 
-4. **Pluralization**: Uses `ngettext()` to handle singular/plural forms based on locale-specific rules
+4. **Locale Detection**: The `get_locale()` function checks multiple sources to determine the user's preferred language
 
-5. **Formatting**: Babel's `dates` and `numbers` modules provide locale-aware formatting for datetimes and currencies
+5. **Database Translations**: Models include `get_title()` and `get_description()` methods that automatically return the appropriate translation based on the user's locale, with fallback to English
 
-6. **Persistence**: Cookies store the user's language preference for future visits
+6. **Pluralization**: Uses `ngettext()` to handle singular/plural forms based on locale-specific rules
+
+7. **Formatting**: Babel's `dates` and `numbers` modules provide locale-aware formatting for datetimes and currencies
+
+8. **Persistence**: Cookies store the user's language preference for future visits
+
+## Database Migrations with Alembic
+
+The project uses Alembic for database migrations. All migration files are located in the `alembic/versions/` directory.
+
+### Migration Files
+
+- **`alembic.ini`** - Alembic configuration file
+- **`alembic/env.py`** - Alembic environment configuration (configured for async PostgreSQL)
+- **`alembic/versions/`** - Directory containing migration files
+
+### Common Alembic Commands
+
+```bash
+# Create a new migration (auto-generate from model changes)
+uv run alembic revision --autogenerate -m "Description of changes"
+
+# Create a new empty migration
+uv run alembic revision -m "Description of changes"
+
+# Apply all pending migrations
+uv run alembic upgrade head
+
+# Apply migrations up to a specific revision
+uv run alembic upgrade <revision_id>
+
+# Rollback one migration
+uv run alembic downgrade -1
+
+# Rollback to a specific revision
+uv run alembic downgrade <revision_id>
+
+# Show current migration status
+uv run alembic current
+
+# Show migration history
+uv run alembic history
+
+# Show pending migrations
+uv run alembic heads
+```
+
+### Initial Migration
+
+The initial migration (`ef546f274885_initial_migration_create_categories_and_.py`) creates:
+- `categories` table with translatable fields
+- `articles` table with translatable fields and foreign key to categories
+
+### Migration Workflow
+
+1. **Make changes to models** in `models.py`
+2. **Generate migration:**
+   ```bash
+   uv run alembic revision --autogenerate -m "Your migration message"
+   ```
+3. **Review the generated migration** in `alembic/versions/`
+4. **Apply the migration:**
+   ```bash
+   uv run alembic upgrade head
+   ```
+
+### Note on Async Database
+
+Alembic migrations run in **sync mode** (required by Alembic), but the configuration automatically converts the async database URL (`postgresql+asyncpg://`) to a sync URL (`postgresql://`) for migrations. The application itself uses async operations at runtime.
 
 ## Further Reading
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Alembic Documentation](https://alembic.sqlalchemy.org/)
 - [Babel Documentation](https://babel.pocoo.org/)
 - [Python gettext Documentation](https://docs.python.org/3/library/gettext.html)
 - [ISO 639 Language Codes](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)

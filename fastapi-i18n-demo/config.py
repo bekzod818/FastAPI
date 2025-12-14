@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     app_name: str = "FastAPI i18n Demo"
     
     # Database
-    database_url: str = "sqlite:///./app.db"
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/fastapi_i18n"
     
     model_config = SettingsConfigDict(
         env_file=".env",
