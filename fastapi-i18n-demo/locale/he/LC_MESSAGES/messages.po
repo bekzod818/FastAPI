@@ -1,0 +1,26 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: he\n"
+
+msgid "Welcome to FastAPI i18n Demo"
+msgstr "ברוכים הבאים ל-FastAPI i18n Demo"
+
+msgid "Hello, {name}!"
+msgstr "שלום, {name}!"
+
+msgid "You have {count} item"
+msgid_plural "You have {count} items"
+msgstr[0] "יש לך {count} פריט"
+msgstr[1] "יש לך {count} פריטים"
+
+msgid "Current datetime"
+msgstr "תאריך ושעה נוכחיים"
+
+msgid "Currency example"
+msgstr "דוגמה למטבע"
+
+msgid "Language changed successfully"
+msgstr "השפה שונתה בהצלחה"
+

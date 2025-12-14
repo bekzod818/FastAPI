@@ -1,0 +1,25 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: es\n"
+
+msgid "Welcome to FastAPI i18n Demo"
+msgstr "Bienvenido a FastAPI i18n Demo"
+
+msgid "Hello, {name}!"
+msgstr "¡Hola, {name}!"
+
+msgid "You have {count} item"
+msgid_plural "You have {count} items"
+msgstr[0] "Tienes {count} artículo"
+msgstr[1] "Tienes {count} artículos"
+
+msgid "Current datetime"
+msgstr "Fecha y hora actual"
+
+msgid "Currency example"
+msgstr "Ejemplo de moneda"
+
+msgid "Language changed successfully"
+msgstr "Idioma cambiado exitosamente"
+
